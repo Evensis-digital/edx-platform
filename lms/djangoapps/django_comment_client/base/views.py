@@ -17,6 +17,8 @@ from opaque_keys.edx.keys import CourseKey
 from courseware.access import has_access
 from util.file import store_uploaded_file
 from courseware.courses import get_course_with_access, get_course_overview_with_access, get_course_by_id
+from lms.djangoapps.courseware.exceptions import CourseAccessRedirect
+
 import django_comment_client.settings as cc_settings
 from django_comment_common.signals import (
     thread_created,
@@ -775,7 +777,7 @@ def users(request, course_id):
     course_key = CourseKey.from_string(course_id)
     try:
         get_course_overview_with_access(request.user, 'load', course_key, check_if_enrolled=True)
-    except Http404:
+    except CourseAccessRedirect:
         # course didn't exist, or requesting user does not have access to it.
         return JsonError(status=404)
 

@@ -2,16 +2,16 @@
 Tests for courseware middleware
 """
 
-from django.core.urlresolvers import reverse
 from django.test.client import RequestFactory
 from django.http import Http404
 from mock import patch
 from nose.plugins.attrib import attr
 
-import courseware.courses as courses
-from courseware.middleware import RedirectUnenrolledMiddleware
 from xmodule.modulestore.tests.django_utils import SharedModuleStoreTestCase
 from xmodule.modulestore.tests.factories import CourseFactory
+
+from lms.djangoapps.courseware.exceptions import Redirect
+from lms.djangoapps.courseware.middleware import RedirectMiddleware
 
 
 @attr(shard=1)
@@ -26,21 +26,6 @@ class CoursewareMiddlewareTestCase(SharedModuleStoreTestCase):
     def setUp(self):
         super(CoursewareMiddlewareTestCase, self).setUp()
 
-    def check_user_not_enrolled_redirect(self):
-        """A UserNotEnrolled exception should trigger a redirect"""
-        request = RequestFactory().get("dummy_url")
-        response = RedirectUnenrolledMiddleware().process_exception(
-            request, courses.UserNotEnrolled(self.course.id)
-        )
-        self.assertEqual(response.status_code, 302)
-        # make sure we redirect to the course about page
-        expected_url = reverse(
-            "about_course", args=[self.course.id.to_deprecated_string()]
-        )
-
-        target_url = response._headers['location'][1]
-        self.assertTrue(target_url.endswith(expected_url))
-
     def test_user_not_enrolled_redirect(self):
         self.check_user_not_enrolled_redirect()
 
@@ -51,7 +36,21 @@ class CoursewareMiddlewareTestCase(SharedModuleStoreTestCase):
     def test_process_404(self):
         """A 404 should not trigger anything"""
         request = RequestFactory().get("dummy_url")
-        response = RedirectUnenrolledMiddleware().process_exception(
+        response = RedirectMiddleware().process_exception(
             request, Http404()
         )
         self.assertIsNone(response)
+
+    def test_redirect_exceptions(self):
+        """
+        Unit tests for handling of Redirect exceptions.
+        """
+        request = RequestFactory().get("dummy_url")
+        test_url = '/test_url'
+        exception = Redirect(test_url)
+        response = RedirectMiddleware().process_exception(
+            request, exception
+        )
+        self.assertEqual(response.status_code, 302)
+        target_url = response._headers['location'][1]
+        self.assertTrue(target_url.endswith(test_url))
