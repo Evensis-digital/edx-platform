@@ -10,6 +10,7 @@ from common.test.acceptance.pages.lms.auto_auth import AutoAuthPage
 from common.test.acceptance.fixtures.course import (CourseFixture, XBlockFixtureDesc)
 
 from common.test.acceptance.pages.lms.discussion import (
+    DiscussionTabHomePage,
     DiscussionTabSingleThreadPage,
     InlineDiscussionThreadPage,
     InlineDiscussionPage)
@@ -70,8 +71,10 @@ class DiscussionTabSingleThreadTest(BaseDiscussionTestCase):
         AutoAuthPage(self.browser, course_id=self.course_id).visit()
 
     def setup_thread_page(self, thread_id):
+        discussion_tab_page = DiscussionTabHomePage(self.browser, self.course_id)
+        discussion_tab_page.visit()
+        discussion_tab_page.show_discussion_and_thread(self.discussion_id, thread_id)
         self.thread_page = DiscussionTabSingleThreadPage(self.browser, self.course_id, self.discussion_id, thread_id)  # pylint: disable=attribute-defined-outside-init
-        self.thread_page.visit()
 
     # pylint: disable=unused-argument
     def refresh_thread_page(self, thread_id):

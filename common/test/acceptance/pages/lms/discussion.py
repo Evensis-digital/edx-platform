@@ -733,3 +733,15 @@ class DiscussionTabHomePage(CoursePage, DiscussionPageMixin):
         """
         self.wait_for_element_visibility(".wmd-preview > div", "WMD preview pane has contents", timeout=10)
         return self.q(css=".wmd-preview").text[0]
+
+    def show_discussion_and_thread(self, discussion_id, thread_id):
+        """
+        Click the links for the specified discussion and thread to show the detailed view.
+        """
+        self.click_element("li[id='{}']".format(discussion_id))
+        EmptyPromise(
+            lambda: self.is_element_visible("li[data-id='{}']".format(thread_id)),
+            "Discussion has been rendered"
+        ).fulfill()
+
+        self.click_element("li[data-id='{}']".format(thread_id))
