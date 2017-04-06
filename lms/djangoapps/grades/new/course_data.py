@@ -9,11 +9,12 @@ class CourseData(object):
     requested course data as long as at least one property is
     provided upon initialization.
 
-    This is an in-memory, per-request cache.
+    This is an in-memory object that maintains its own internal
+    cache during its lifecycle.
     """
     def __init__(self, user, course=None, collected_block_structure=None, structure=None, course_key=None):
         if not any([course, collected_block_structure, structure, course_key]):
-            raise AttributeError(
+            raise ValueError(
                 "You must specify one of course, collected_block_structure, structure, or course_key to this method."
             )
         self.user = user
@@ -82,7 +83,7 @@ class CourseData(object):
     @property
     def edited_on(self):
         # get course block from structure only; subtree_edited_on field on modulestore's course block isn't optimized.
-        course_block = self.structure[self.location]
+        course_block = self.structure[self.location] if self.structure else {}
         return getattr(course_block, 'subtree_edited_on', None)
 
     @property
