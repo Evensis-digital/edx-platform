@@ -13,6 +13,8 @@ from mock import patch
 import pytz
 
 from capa.tests.response_xml_factory import MultipleChoiceResponseXMLFactory
+from courseware.access import has_access
+from courseware.access_response import VisibilityError
 from courseware.tests.test_submitting_problems import ProblemSubmissionTestMixin
 from lms.djangoapps.course_blocks.api import get_course_blocks
 from lms.djangoapps.grades.config.tests.utils import persistent_grades_feature_flags
@@ -101,6 +103,19 @@ class TestCourseGradeFactory(GradeTestBase):
             },
         }
         self.course.set_grading_policy(grading_policy)
+
+    def test_course_grade_no_access(self):
+        """
+        Test to ensure a grade can ba calculated for a student in a course, even if they themselves do not have access.
+        """
+        invisible_course = CourseFactory.create(visible_to_staff_only=True)
+        access = has_access(self.request.user, 'load', invisible_course)
+        self.assertEqual(access.has_access, False)
+        self.assertEqual(access.error_code, 'not_visible_to_user')
+
+        # with self.assertNoExceptionRaised: <- this isn't a real method, it's an implicit assumption
+        _ = CourseGradeFactory().create(self.request.user, invisible_course)
+
 
     @patch.dict(settings.FEATURES, {'PERSISTENT_GRADES_ENABLED_FOR_ALL_TESTS': False})
     @ddt.data(
