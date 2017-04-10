@@ -116,7 +116,6 @@ class TestCourseGradeFactory(GradeTestBase):
         # with self.assertNoExceptionRaised: <- this isn't a real method, it's an implicit assumption
         _ = CourseGradeFactory().create(self.request.user, invisible_course)
 
-
     @patch.dict(settings.FEATURES, {'PERSISTENT_GRADES_ENABLED_FOR_ALL_TESTS': False})
     @ddt.data(
         (True, True),

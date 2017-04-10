@@ -94,6 +94,9 @@ class CourseData(object):
         return u'Course: course_key: {}'.format(self.course_key)
 
     def full_string(self):
-        return u'Course: course_key: {}, version: {}, edited_on: {}, grading_policy: {}'.format(
-            self.course_key, self.version, self.edited_on, self.grading_policy_hash,
-        )
+        if self.effective_structure:
+            return u'Course: course_key: {}, version: {}, edited_on: {}, grading_policy: {}'.format(
+                self.course_key, self.version, self.edited_on, self.grading_policy_hash,
+            )
+        else:
+            return u'Course: course_key: {}. Structure not available.'.format(self.course_key)
