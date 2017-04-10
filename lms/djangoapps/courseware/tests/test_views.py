@@ -1441,23 +1441,23 @@ class ProgressPageTests(ModuleStoreTestCase):
         """Test that query counts remain the same for self-paced and instructor-paced courses."""
         SelfPacedConfiguration(enabled=self_paced_enabled).save()
         self.setup_course(self_paced=self_paced)
-        with self.assertNumQueries(42), check_mongo_calls(2):
+        with self.assertNumQueries(42), check_mongo_calls(1):
             self._get_progress_page()
 
     @ddt.data(
         (False, 41, 27),
-        (True, 41, 27)
+        (True, 0, 27)
     )
     @ddt.unpack
     def test_progress_queries(self, enable_waffle, initial, subsequent):
         self.setup_course()
         with grades_waffle().override(ASSUME_ZERO_GRADE_IF_ABSENT, active=enable_waffle):
-            with self.assertNumQueries(initial), check_mongo_calls(2):
+            with self.assertNumQueries(initial), check_mongo_calls(1):
                 self._get_progress_page()
 
             # subsequent accesses to the progress page require fewer queries.
             for _ in range(2):
-                with self.assertNumQueries(subsequent), check_mongo_calls(2):
+                with self.assertNumQueries(subsequent), check_mongo_calls(1):
                     self._get_progress_page()
 
     @patch(

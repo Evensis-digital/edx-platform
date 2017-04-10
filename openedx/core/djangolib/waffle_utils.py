@@ -52,6 +52,9 @@ class WaffleSwitchPlus(WafflePlus):
         """
         namespaced_switch_name = self._namespaced_setting_name(switch_name)
         value = self._cached_switches.get(namespaced_switch_name)
+        print "Read cache"
+        print self._get_request_cache()
+        print "\n"
         if value is None:
             value = switch_is_active(namespaced_switch_name)
             self._cached_switches[namespaced_switch_name] = value
@@ -79,6 +82,9 @@ class WaffleSwitchPlus(WafflePlus):
         """
         namespaced_switch_name = self._namespaced_setting_name(switch_name)
         self._cached_switches[namespaced_switch_name] = active
+        print "Set cached value"
+        print self._get_request_cache()
+        print "\n"
         log.info(u"%sSwitch '%s' set to %s for request.", self.log_prefix, namespaced_switch_name, active)
 
     @property
