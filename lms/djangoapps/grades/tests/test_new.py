@@ -14,7 +14,6 @@ import pytz
 
 from capa.tests.response_xml_factory import MultipleChoiceResponseXMLFactory
 from courseware.access import has_access
-from courseware.access_response import VisibilityError
 from courseware.tests.test_submitting_problems import ProblemSubmissionTestMixin
 from lms.djangoapps.course_blocks.api import get_course_blocks
 from lms.djangoapps.grades.config.tests.utils import persistent_grades_feature_flags
@@ -30,7 +29,7 @@ from ..config.waffle import waffle, ASSUME_ZERO_GRADE_IF_ABSENT
 from ..models import PersistentSubsectionGrade
 from ..new.course_data import CourseData
 from ..new.course_grade_factory import CourseGradeFactory
-from ..new.course_grade import ZeroCourseGrade
+from ..new.course_grade import ZeroCourseGrade, CourseGrade
 from ..new.subsection_grade_factory import SubsectionGrade, SubsectionGradeFactory
 from .utils import mock_get_score, mock_get_submissions_score
 
@@ -145,12 +144,17 @@ class TestCourseGradeFactory(GradeTestBase):
         self.assertEqual(course_grade.letter_grade, u'Pass')
         self.assertEqual(course_grade.percent, 0.5)
 
-    def test_zero_course_grade(self):
-        grade_factory = CourseGradeFactory()
-        with mock_get_score(0, 2):
-            course_grade = grade_factory.create(self.request.user, self.course)
-        self.assertIsNone(course_grade.letter_grade)
-        self.assertEqual(course_grade.percent, 0.0)
+    @ddt.data(True, False)
+    def test_zero_course_grade(self, assume_zero_enabled):
+        with waffle().override(ASSUME_ZERO_GRADE_IF_ABSENT, active=assume_zero_enabled):
+            grade_factory = CourseGradeFactory()
+            with mock_get_score(0, 2):
+                course_grade = grade_factory.create(self.request.user, self.course)
+
+            self.assertIsInstance(course_grade, ZeroCourseGrade if assume_zero_enabled else CourseGrade)
+            self.assertIsNone(course_grade.letter_grade)
+            self.assertEqual(course_grade.percent, 0.0)
+            self.assertIsNotNone(course_grade.chapter_grades)
 
     def test_get_persisted(self):
         grade_factory = CourseGradeFactory()
